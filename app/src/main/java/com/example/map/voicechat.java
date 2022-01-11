@@ -37,7 +37,7 @@ public class voicechat extends AppCompatActivity {
     int myBufferSize = 1400;
     AudioRecord audioRecord;
 
-//test
+    //test
     private boolean status = true;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
