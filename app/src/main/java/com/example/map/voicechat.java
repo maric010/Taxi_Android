@@ -34,7 +34,7 @@ import static android.content.ContentValues.TAG;
 import static com.example.map.connection.LOG_TAG;
 
 public class voicechat extends AppCompatActivity {
-    int myBufferSize = 1400;
+    int myBufferSize = 2000;
     AudioRecord audioRecord;
 
     //test
@@ -85,8 +85,8 @@ public class voicechat extends AppCompatActivity {
         DatagramSocket finalSocket = socket;
 
 
-        AudioTrack audio = new AudioTrack(AudioManager.STREAM_VOICE_CALL, 8000, AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_8BIT, 3000 /* 1 second buffer */,
+        AudioTrack audio = new AudioTrack(AudioManager.STREAM_VOICE_CALL, 10000, AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT, 2000,
                 AudioTrack.MODE_STREAM);
         audio.play();
 
@@ -105,35 +105,7 @@ public class voicechat extends AppCompatActivity {
                         Log.d(TAG, "readCount = " + readCount);
                         packet = new DatagramPacket (myBuffer,myBuffer.length,destination,9987);
                         finalSocket.send(packet);
-                        audio.write(myBuffer,0,myBuffer.length);
                     }
-
-
-/*
-                    byte[] buffer = new byte[1024];
-
-                    recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,sampleRate,channelConfig,audioFormat,minBufSize*10);
-                    recorder.startRecording();
-                    byte[] bf = "test|".getBytes();
-                    ByteArrayOutputStream output;
-                    while(status) {
-                        try {
-                        minBufSize = recorder.read(buffer, 0, buffer.length);
-                        output = new ByteArrayOutputStream();
-                        output.write(bf);
-                        output.write(buffer);
-                        byte[] out = output.toByteArray();
-                        packet = new DatagramPacket (out,out.length,destination,9987);
-                        finalSocket.send(packet);
-
-                        } catch(UnknownHostException e) {
-                            Log.e("VS", "UnknownHostException");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            Log.e("VS", "IOException");
-                        }
-                    }
-                    */
             } catch (UnknownHostException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -148,22 +120,21 @@ public class voicechat extends AppCompatActivity {
             @Override
             public void run() {
 
-                Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
-                byte [] noiseData = new byte[1000];
-                Random rnd = new Random();
-
+                //Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 
                     while (status) {
                         try {
 
-                            byte[] message = new byte[1024];
+                            byte[] message = new byte[2000];
                             DatagramPacket packet = new DatagramPacket(message,message.length);
                             Log.i("UDP client: ", "about to wait to receive");
                             finalSocket1.receive(packet);
                             //String text = new String(message, 0, packet.getLength());
-                            String str = new String(packet.getData(), StandardCharsets.UTF_8).replaceAll("\u0000.*", "");
+                            //String str = new String(packet.getData(), StandardCharsets.UTF_8).replaceAll("\u0000.*", "");
+                            audio.write(packet.getData(), 0, packet.getData().length);
+                            System.out.println(Arrays.toString(packet.getData()));
 
-                            audio.write(str.getBytes(), 0, str.getBytes().length);
+                            //audio.write(str.getBytes(), 0, str.getBytes().length);
 
                         }catch (IOException e) {
                             //status = false;
@@ -176,20 +147,14 @@ public class voicechat extends AppCompatActivity {
                 audio.release();
             }
         });
-        //recieveThread.start();
+        recieveThread.start();
 
     }
     private void createAudioRecorder() {
-        int sampleRate = 16000;
-        int channelConfig = AudioFormat.CHANNEL_IN_MONO;
+        int sampleRate = 10000;
+        int channelConfig = AudioFormat.CHANNEL_IN_DEFAULT;
         int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-
-        int minInternalBufferSize = AudioRecord.getMinBufferSize(sampleRate,
-                channelConfig, audioFormat);
-        int internalBufferSize = minInternalBufferSize * 4;
-        Log.d(TAG, "minInternalBufferSize = " + minInternalBufferSize
-                + ", internalBufferSize = " + internalBufferSize
-                + ", myBufferSize = " + myBufferSize);
+        int internalBufferSize = myBufferSize;
 
         audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
                 sampleRate, channelConfig, audioFormat, internalBufferSize);
